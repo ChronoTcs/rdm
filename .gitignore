@@ -1,0 +1,20 @@
+# Git ignore rules for RDM (Rust Download Manager)
+graphify-out/
+target/
+build/
+.dart_tool/
+.packages
+*.log
+
+# IDE & Editor artifacts
+.idea/
+*.iml
+.vscode/
+.metadata
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# Native host DB & temporary outputs
+rdm_native.db
+rdm_native.db-wal
+rdm_native.db-shm

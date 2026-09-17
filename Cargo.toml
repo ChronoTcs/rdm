@@ -1,0 +1,30 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/rdm_engine",
+    "crates/rdm_bridge",
+    "crates/rdm_cli",
+    "crates/rdm_daemon",
+    "crates/rdm_native_host",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["RDM Contributors"]
+license = "MIT OR Apache-2.0"
+
+[workspace.dependencies]
+tokio = { version = "1.40", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+reqwest = { version = "0.13", features = ["stream", "json"] }
+parking_lot = "0.12"
+thiserror = "2.0"
+futures-util = "0.3"
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1.10", features = ["v4", "serde"] }
+tracing = "0.1"
+tracing-subscriber = "0.3"
+proptest = "1.5"
+tempfile = "3.12"
