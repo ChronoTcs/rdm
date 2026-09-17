@@ -8,18 +8,20 @@ class SegmentVisualizerPainter extends CustomPainter {
     required this.totalBytes,
     this.isIndeterminate = false,
     this.pulseOpacity = 1.0,
+    this.backgroundColor,
   });
 
   final List<SegmentProgress> segments;
   final int totalBytes;
   final bool isIndeterminate;
   final double pulseOpacity;
+  final Color? backgroundColor;
 
   @override
   void paint(Canvas canvas, Size size) {
     // 1. Draw track background
     final bgPaint = Paint()
-      ..color = ColorTokens.darkBgElevated
+      ..color = backgroundColor ?? ColorTokens.darkBgElevated
       ..style = PaintingStyle.fill;
     final rrect = RRect.fromRectAndRadius(
       Offset.zero & size,

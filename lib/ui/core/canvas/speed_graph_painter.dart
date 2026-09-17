@@ -5,10 +5,14 @@ class SpeedGraphPainter extends CustomPainter {
   const SpeedGraphPainter({
     required this.speedHistory,
     required this.peakSpeed,
+    this.lineColor,
+    this.gridColor,
   });
 
   final List<double> speedHistory;
   final double peakSpeed;
+  final Color? lineColor;
+  final Color? gridColor;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -17,6 +21,7 @@ class SpeedGraphPainter extends CustomPainter {
     final width = size.width;
     final height = size.height;
     final maxSpeed = (peakSpeed > 0 ? peakSpeed : 1.0) * 1.1; // 10% headroom
+    final effectiveLineColor = lineColor ?? ColorTokens.accentPrimary;
 
     final points = <Offset>[];
     final stepX = width / (speedHistory.length - 1).clamp(1, double.infinity);
@@ -49,8 +54,8 @@ class SpeedGraphPainter extends CustomPainter {
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
       colors: [
-        ColorTokens.accentPrimary.withValues(alpha: 0.4),
-        ColorTokens.accentPrimary.withValues(alpha: 0.0),
+        effectiveLineColor.withValues(alpha: 0.35),
+        effectiveLineColor.withValues(alpha: 0.0),
       ],
     );
 
@@ -61,7 +66,7 @@ class SpeedGraphPainter extends CustomPainter {
 
     // Draw curve line
     final linePaint = Paint()
-      ..color = ColorTokens.accentPrimary
+      ..color = effectiveLineColor
       ..strokeWidth = 2.0
       ..style = PaintingStyle.stroke;
     canvas.drawPath(path, linePaint);
@@ -70,7 +75,7 @@ class SpeedGraphPainter extends CustomPainter {
     if (peakSpeed > 0) {
       final peakY = height - ((peakSpeed / maxSpeed).clamp(0.0, 1.0) * height);
       final peakPaint = Paint()
-        ..color = ColorTokens.darkTextSecondary.withValues(alpha: 0.5)
+        ..color = (gridColor ?? ColorTokens.darkTextSecondary).withValues(alpha: 0.5)
         ..strokeWidth = 1.0
         ..style = PaintingStyle.stroke;
 

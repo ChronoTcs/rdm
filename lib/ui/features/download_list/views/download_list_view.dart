@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../domain/models/download_task.dart';
 import '../../../core/theme/adaptive_icons.dart';
 import '../../../core/theme/color_tokens.dart';
-import '../../../core/theme/app_typography.dart';
+import '../../../core/widgets/island_card.dart';
 import '../view_models/download_list_view_model.dart';
 
 class DownloadListView extends StatelessWidget {
@@ -18,229 +18,395 @@ class DownloadListView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tasks = viewModel.tasks;
+    final colors = ColorTokens.of(context);
 
     if (tasks.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              AdaptiveIcons.downloadDone,
-              size: 48,
-              color: ColorTokens.darkTextSecondary.withValues(alpha: 0.5),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'No downloads in this view',
-              style: TextStyle(
-                fontSize: 14,
-                color: ColorTokens.darkTextSecondary,
+      return IslandCard(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: colors.cardElevated,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: colors.borderSubtle, width: 1),
+                ),
+                child: Icon(
+                  AdaptiveIcons.downloadDone,
+                  size: 28,
+                  color: colors.textMuted,
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 16),
+              Text(
+                'No downloads in this view',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: colors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Add a URL above or drop a link into the basket to start',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: colors.textMuted,
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
 
-    return Column(
-      children: [
-        // Table Header
-        Container(
-          height: 32,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: const BoxDecoration(
-            color: ColorTokens.darkBgSurface,
-            border: Border(
-              bottom: BorderSide(color: ColorTokens.darkBorderSubtle, width: 1),
+    return IslandCard(
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        children: [
+          // Table / Bento Card Header Row
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 36,
+                  child: Text(
+                    'TYPE',
+                    style: _headerStyle(colors),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 5,
+                  child: Text(
+                    'FILE NAME',
+                    style: _headerStyle(colors),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'SIZE',
+                    style: _headerStyle(colors),
+                  ),
+                ),
+                Expanded(
+                  flex: 4,
+                  child: Text(
+                    'PROGRESS',
+                    style: _headerStyle(colors),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'SPEED',
+                    style: _headerStyle(colors),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'ETA',
+                    style: _headerStyle(colors),
+                  ),
+                ),
+                const SizedBox(
+                  width: 44,
+                  child: Text(
+                    'ACTION',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.6,
+                      color: Colors.transparent,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          child: const Row(
-            children: [
-              SizedBox(width: 32, child: Text('#', style: _headerStyle)),
-              Expanded(flex: 4, child: Text('Name', style: _headerStyle)),
-              Expanded(flex: 2, child: Text('Size', style: _headerStyle)),
-              Expanded(flex: 3, child: Text('Progress', style: _headerStyle)),
-              Expanded(flex: 2, child: Text('Speed', style: _headerStyle)),
-              Expanded(flex: 2, child: Text('ETA', style: _headerStyle)),
-              SizedBox(width: 48, child: Text('Action', style: _headerStyle)),
-            ],
-          ),
-        ),
+          Divider(color: colors.borderSubtle, height: 1),
+          const SizedBox(height: 6),
 
-        // Table Rows
-        Expanded(
-          child: ListView.separated(
-            itemCount: tasks.length,
-            separatorBuilder: (_, _) => const Divider(
-              color: ColorTokens.darkBorderSubtle,
-              height: 1,
+          // Download Items Bento List
+          Expanded(
+            child: ListView.builder(
+              itemCount: tasks.length,
+              itemBuilder: (context, index) {
+                final task = tasks[index];
+                final isSelected = viewModel.selectedTaskIds.contains(task.id);
+                return _buildTaskRow(context, task, isSelected);
+              },
             ),
-            itemBuilder: (context, index) {
-              final task = tasks[index];
-              final isSelected = viewModel.selectedTaskIds.contains(task.id);
+          ),
+        ],
+      ),
+    );
+  }
 
-              return InkWell(
-                onTap: () {
-                  viewModel.selectTask(task.id);
-                  onTaskSelected(task.id);
-                },
-                child: Container(
-                  height: 44,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  color: isSelected
-                      ? ColorTokens.accentPrimary.withValues(alpha: 0.12)
-                      : Colors.transparent,
-                  child: Row(
+  Widget _buildTaskRow(BuildContext context, DownloadTask task, bool isSelected) {
+    final colors = ColorTokens.of(context);
+    final categoryColor = _getCategoryColor(task.category);
+    final categoryIcon = _getCategoryIcon(task.category);
+
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 3),
+      child: Material(
+        color: isSelected
+            ? ColorTokens.accentPrimary.withValues(alpha: 0.1)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          onTap: () {
+            viewModel.selectTask(task.id);
+            onTaskSelected(task.id);
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isSelected
+                    ? ColorTokens.accentPrimary.withValues(alpha: 0.35)
+                    : colors.borderSubtle.withValues(alpha: 0.4),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                // Category Icon in Tinted Capsule (Reference Image 1 & 3)
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: categoryColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(9),
+                  ),
+                  child: Center(
+                    child: Icon(
+                      categoryIcon,
+                      size: 18,
+                      color: categoryColor,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+
+                // Filename and URL domain
+                Expanded(
+                  flex: 5,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // Status Icon
-                      SizedBox(
-                        width: 32,
-                        child: _buildStatusIcon(task.status),
-                      ),
-
-                      // Filename
-                      Expanded(
-                        flex: 4,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              task.filename,
-                              style: AppTypography.tableCellPrimary.copyWith(
-                                color: ColorTokens.darkTextPrimary,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            Text(
-                              task.url,
-                              style: AppTypography.tableCellSecondary.copyWith(
-                                color: ColorTokens.darkTextSecondary,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
+                      Text(
+                        task.filename,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: colors.textPrimary,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-
-                      // Size
-                      Expanded(
-                        flex: 2,
-                        child: Text(
-                          task.formattedTotalSize,
-                          style: AppTypography.dataMetricStyle.copyWith(
-                            color: ColorTokens.darkTextSecondary,
-                          ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _formatUrl(task.url),
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: colors.textMuted,
                         ),
-                      ),
-
-                      // Progress Bar & Percentage
-                      Expanded(
-                        flex: 3,
-                        child: Padding(
-                          padding: const EdgeInsets.only(right: 16),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(2),
-                                child: LinearProgressIndicator(
-                                  value: task.indeterminate ? null : task.progressPercentage,
-                                  backgroundColor: ColorTokens.darkBgElevated,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    task.status == TaskStatus.completed
-                                        ? ColorTokens.statusDone
-                                        : ColorTokens.statusActive,
-                                  ),
-                                  minHeight: 4,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                task.indeterminate
-                                    ? 'Streaming...'
-                                    : '${(task.progressPercentage * 100).toStringAsFixed(1)}%',
-                                style: AppTypography.tooltip.copyWith(
-                                  color: ColorTokens.darkTextSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-
-                      // Speed
-                      Expanded(
-                        flex: 2,
-                        child: Text(
-                          task.formattedSpeed,
-                          style: AppTypography.dataMetricStyle.copyWith(
-                            color: task.speedBps > 0
-                                ? ColorTokens.statusActive
-                                : ColorTokens.darkTextSecondary,
-                          ),
-                        ),
-                      ),
-
-                      // ETA
-                      Expanded(
-                        flex: 2,
-                        child: Text(
-                          task.formattedEta,
-                          style: AppTypography.dataMetricStyle.copyWith(
-                            color: ColorTokens.darkTextSecondary,
-                          ),
-                        ),
-                      ),
-
-                      // Pause / Resume Toggle Action
-                      SizedBox(
-                        width: 48,
-                        child: IconButton(
-                          icon: Icon(
-                            task.status == TaskStatus.downloading
-                                ? AdaptiveIcons.pause
-                                : AdaptiveIcons.play,
-                            size: 16,
-                            color: ColorTokens.darkTextSecondary,
-                          ),
-                          onPressed: () {
-                            if (task.status == TaskStatus.downloading) {
-                              viewModel.pauseTask(task.id);
-                            } else {
-                              viewModel.resumeTask(task.id);
-                            }
-                          },
-                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
                 ),
-              );
-            },
+
+                // Size
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    task.formattedTotalSize,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: colors.textSecondary,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+                  ),
+                ),
+
+                // Progress Bar and Percentage
+                Expanded(
+                  flex: 4,
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(3),
+                          child: LinearProgressIndicator(
+                            value: task.indeterminate ? null : task.progressPercentage,
+                            backgroundColor: colors.cardElevated,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              task.status == TaskStatus.completed
+                                  ? ColorTokens.statusDone
+                                  : task.status == TaskStatus.paused
+                                      ? ColorTokens.statusPause
+                                      : task.status == TaskStatus.error
+                                          ? ColorTokens.statusError
+                                          : ColorTokens.accentPrimary,
+                            ),
+                            minHeight: 5,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              task.indeterminate
+                                  ? 'Streaming...'
+                                  : '${(task.progressPercentage * 100).toStringAsFixed(1)}%',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: colors.textSecondary,
+                                fontFeatures: const [FontFeature.tabularFigures()],
+                              ),
+                            ),
+                            Text(
+                              _statusLabel(task.status),
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: _statusColor(task.status),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // Speed
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    task.formattedSpeed,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: task.speedBps > 0
+                          ? ColorTokens.accentPrimary
+                          : colors.textMuted,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+                  ),
+                ),
+
+                // ETA
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    task.formattedEta,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: colors.textSecondary,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+                  ),
+                ),
+
+                // Quick Action Button
+                SizedBox(
+                  width: 44,
+                  child: IconButton(
+                    icon: Icon(
+                      task.status == TaskStatus.downloading
+                          ? AdaptiveIcons.pause
+                          : AdaptiveIcons.play,
+                      size: 16,
+                      color: colors.textSecondary,
+                    ),
+                    tooltip: task.status == TaskStatus.downloading ? 'Pause' : 'Resume',
+                    onPressed: () {
+                      if (task.status == TaskStatus.downloading) {
+                        viewModel.pauseTask(task.id);
+                      } else {
+                        viewModel.resumeTask(task.id);
+                      }
+                    },
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
-      ],
+      ),
     );
   }
 
-  Widget _buildStatusIcon(TaskStatus status) {
-    return switch (status) {
-      TaskStatus.downloading => Icon(AdaptiveIcons.arrowDownward, size: 16, color: ColorTokens.statusActive),
-      TaskStatus.paused => Icon(AdaptiveIcons.pause, size: 16, color: ColorTokens.statusPause),
-      TaskStatus.completed => Icon(AdaptiveIcons.check, size: 16, color: ColorTokens.statusDone),
-      TaskStatus.error => Icon(AdaptiveIcons.error, size: 16, color: ColorTokens.statusError),
-      TaskStatus.expiredLink => Icon(AdaptiveIcons.linkOff, size: 16, color: ColorTokens.statusPause),
-      TaskStatus.queued => Icon(AdaptiveIcons.schedule, size: 16, color: ColorTokens.darkTextSecondary),
-    };
-  }
+  TextStyle _headerStyle(AppColorScheme colors) => TextStyle(
+        fontSize: 11,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0.6,
+        color: colors.textMuted,
+      );
 
-  static const _headerStyle = TextStyle(
-    fontSize: 11,
-    fontWeight: FontWeight.w700,
-    color: ColorTokens.darkTextSecondary,
-  );
+  Color _getCategoryColor(TaskCategory cat) => switch (cat) {
+        TaskCategory.compressed => ColorTokens.categoryCompressed,
+        TaskCategory.video => ColorTokens.categoryVideo,
+        TaskCategory.audio => ColorTokens.categoryAudio,
+        TaskCategory.documents => ColorTokens.categoryDocuments,
+        TaskCategory.programs => ColorTokens.categoryPrograms,
+        TaskCategory.general => ColorTokens.accentPrimary,
+      };
+
+  IconData _getCategoryIcon(TaskCategory cat) => switch (cat) {
+        TaskCategory.compressed => AdaptiveIcons.folderZip,
+        TaskCategory.video => AdaptiveIcons.video,
+        TaskCategory.audio => AdaptiveIcons.audio,
+        TaskCategory.documents => AdaptiveIcons.documents,
+        TaskCategory.programs => AdaptiveIcons.programs,
+        TaskCategory.general => AdaptiveIcons.folder,
+      };
+
+  Color _statusColor(TaskStatus status) => switch (status) {
+        TaskStatus.downloading => ColorTokens.statusActive,
+        TaskStatus.paused => ColorTokens.statusPause,
+        TaskStatus.completed => ColorTokens.statusDone,
+        TaskStatus.error => ColorTokens.statusError,
+        TaskStatus.expiredLink => ColorTokens.statusPause,
+        TaskStatus.queued => ColorTokens.darkTextSecondary,
+      };
+
+  String _statusLabel(TaskStatus status) => switch (status) {
+        TaskStatus.downloading => 'Active',
+        TaskStatus.paused => 'Paused',
+        TaskStatus.completed => 'Done',
+        TaskStatus.error => 'Failed',
+        TaskStatus.expiredLink => 'Expired',
+        TaskStatus.queued => 'Queued',
+      };
+
+  String _formatUrl(String url) {
+    try {
+      final uri = Uri.parse(url);
+      return uri.host.isNotEmpty ? uri.host : url;
+    } catch (_) {
+      return url;
+    }
+  }
 }

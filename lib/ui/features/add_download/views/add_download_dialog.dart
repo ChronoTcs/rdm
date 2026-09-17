@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/adaptive_icons.dart';
 import '../../../core/theme/color_tokens.dart';
-import '../../../core/theme/app_typography.dart';
 import '../view_models/add_download_view_model.dart';
 
 class AddDownloadDialog extends StatefulWidget {
@@ -47,97 +46,144 @@ class _AddDownloadDialogState extends State<AddDownloadDialog> {
   @override
   Widget build(BuildContext context) {
     final vm = widget.viewModel;
+    final colors = ColorTokens.of(context);
 
     return Dialog(
-      backgroundColor: ColorTokens.darkBgSurface,
+      backgroundColor: colors.cardSurface,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-        side: const BorderSide(color: ColorTokens.darkBorderSubtle),
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: colors.borderSubtle),
       ),
       child: Container(
         width: 520,
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Title
+            // Title Bar
             Row(
               children: [
-                Icon(AdaptiveIcons.download, size: 20, color: ColorTokens.accentPrimary),
-                const SizedBox(width: 8),
-                const Text(
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: ColorTokens.accentPrimary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Center(
+                    child: Icon(AdaptiveIcons.download, size: 18, color: ColorTokens.accentPrimary),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Text(
                   'Add New Download',
-                  style: AppTypography.displayHeading,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: colors.textPrimary,
+                  ),
                 ),
                 const Spacer(),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                   decoration: BoxDecoration(
-                    color: ColorTokens.accentPrimary.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(4),
+                    color: ColorTokens.accentPrimary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
                     vm.detectedProtocol,
                     style: const TextStyle(
-                      fontSize: 10,
+                      fontSize: 11,
                       fontWeight: FontWeight.w700,
-                      color: ColorTokens.accentSecondary,
+                      color: ColorTokens.accentPrimary,
                     ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
 
             // URL input
-            const Text('Download Address (URL):', style: AppTypography.tableCellSecondary),
+            Text(
+              'Download Address (URL):',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: colors.textSecondary),
+            ),
             const SizedBox(height: 6),
             TextField(
               controller: _urlController,
-              style: AppTypography.tableCellPrimary,
+              style: TextStyle(fontSize: 13, color: colors.textPrimary),
               decoration: InputDecoration(
                 hintText: 'https://...',
-                hintStyle: const TextStyle(color: ColorTokens.darkTextSecondary),
+                hintStyle: TextStyle(color: colors.textMuted),
                 filled: true,
-                fillColor: ColorTokens.darkBgElevated,
+                fillColor: colors.cardElevated,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(6),
-                  borderSide: BorderSide.none,
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: colors.borderSubtle),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: colors.borderSubtle),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: ColorTokens.accentPrimary),
                 ),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               ),
               onChanged: (val) => vm.setUrl(val),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
 
             // Filename input
-            const Text('Save As (Filename):', style: AppTypography.tableCellSecondary),
+            Text(
+              'Save As (Filename):',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: colors.textSecondary),
+            ),
             const SizedBox(height: 6),
             TextField(
               controller: _filenameController,
-              style: AppTypography.tableCellPrimary,
+              style: TextStyle(fontSize: 13, color: colors.textPrimary),
               decoration: InputDecoration(
                 hintText: 'filename.ext',
-                hintStyle: const TextStyle(color: ColorTokens.darkTextSecondary),
+                hintStyle: TextStyle(color: colors.textMuted),
                 filled: true,
-                fillColor: ColorTokens.darkBgElevated,
+                fillColor: colors.cardElevated,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(6),
-                  borderSide: BorderSide.none,
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: colors.borderSubtle),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: colors.borderSubtle),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: ColorTokens.accentPrimary),
                 ),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               ),
               onChanged: (val) => vm.setFilename(val),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
 
             // Concurrency Slider
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Max Connections:', style: AppTypography.tableCellSecondary),
-                Text('${vm.concurrency} connections', style: AppTypography.dataMetricStyle),
+                Text(
+                  'Max Connections:',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: colors.textSecondary),
+                ),
+                Text(
+                  '${vm.concurrency} threads',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: ColorTokens.accentPrimary,
+                  ),
+                ),
               ],
             ),
             Slider(
@@ -146,7 +192,7 @@ class _AddDownloadDialogState extends State<AddDownloadDialog> {
               max: 32,
               divisions: 31,
               activeColor: ColorTokens.accentPrimary,
-              inactiveColor: ColorTokens.darkBgElevated,
+              inactiveColor: colors.cardElevated,
               onChanged: (val) => vm.setConcurrency(val.toInt()),
             ),
 
@@ -158,37 +204,52 @@ class _AddDownloadDialogState extends State<AddDownloadDialog> {
               ),
             ],
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 18),
             // Actions
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Cancel', style: TextStyle(color: ColorTokens.darkTextSecondary)),
+                  child: Text('Cancel', style: TextStyle(color: colors.textSecondary)),
                 ),
-                const SizedBox(width: 8),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: ColorTokens.accentPrimary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                const SizedBox(width: 10),
+                Container(
+                  height: 36,
+                  decoration: BoxDecoration(
+                    gradient: ColorTokens.accentGradient,
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: [
+                      BoxShadow(
+                        color: ColorTokens.accentPrimary.withValues(alpha: 0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
-                  onPressed: vm.isSubmitting
-                      ? null
-                      : () async {
-                          final taskId = await vm.submit();
-                          if (taskId != null && context.mounted) {
-                            Navigator.of(context).pop(taskId);
-                          }
-                        },
-                  child: vm.isSubmitting
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                        )
-                      : const Text('Start Download'),
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    onPressed: vm.isSubmitting
+                        ? null
+                        : () async {
+                            final taskId = await vm.submit();
+                            if (taskId != null && context.mounted) {
+                              Navigator.of(context).pop(taskId);
+                            }
+                          },
+                    child: vm.isSubmitting
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          )
+                        : const Text('Start Download', style: TextStyle(fontWeight: FontWeight.w600)),
+                  ),
                 ),
               ],
             ),

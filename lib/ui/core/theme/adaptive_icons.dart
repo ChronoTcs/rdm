@@ -18,6 +18,7 @@ abstract final class AdaptiveIcons {
   static IconData get audio => isIos ? CupertinoIcons.music_note : Icons.music_note_outlined;
   static IconData get documents => isIos ? CupertinoIcons.doc_text : Icons.description_outlined;
   static IconData get programs => isIos ? CupertinoIcons.macwindow : Icons.terminal_outlined;
+  static IconData get folder => isIos ? CupertinoIcons.folder : Icons.folder_outlined;
 
   // Actions & Controls
   static IconData get bolt => isIos ? CupertinoIcons.bolt_fill : Icons.bolt;

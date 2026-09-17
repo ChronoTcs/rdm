@@ -4,6 +4,8 @@ import 'di/injection_container.dart';
 import 'domain/models/app_settings.dart';
 import 'domain/repositories/settings_repository.dart';
 import 'ui/core/theme/app_theme.dart';
+import 'ui/core/theme/color_tokens.dart';
+import 'ui/core/widgets/activity_rail.dart';
 import 'ui/core/widgets/app_header_bar.dart';
 import 'ui/core/widgets/sidebar_navigation.dart';
 import 'ui/core/widgets/drop_basket_target.dart';
@@ -42,19 +44,38 @@ class _RdmAppState extends State<RdmApp> {
     });
   }
 
+  void _toggleTheme() {
+    final isDark = _settings.themeMode != ThemeModeOption.cleanLight;
+    final next = isDark ? ThemeModeOption.cleanLight : ThemeModeOption.modernDark;
+    _settingsRepo.updateSettings(_settings.copyWith(themeMode: next));
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'RDM - Rust Download Manager',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.getTheme(_settings.themeMode),
-      home: const MainScreen(),
+      home: MainScreen(
+        themeMode: _settings.themeMode,
+        onToggleTheme: _toggleTheme,
+        showDropBasket: _settings.showDropBasket,
+      ),
     );
   }
 }
 
 class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+  const MainScreen({
+    super.key,
+    required this.themeMode,
+    required this.onToggleTheme,
+    required this.showDropBasket,
+  });
+
+  final ThemeModeOption themeMode;
+  final VoidCallback onToggleTheme;
+  final bool showDropBasket;
 
   @override
   State<MainScreen> createState() => _MainScreenState();
@@ -64,6 +85,7 @@ class _MainScreenState extends State<MainScreen> {
   late final DownloadListViewModel _downloadListViewModel;
   TaskInspectorViewModel? _inspectorViewModel;
   String? _inspectedTaskId;
+  RailViewMode _currentRailView = RailViewMode.downloads;
 
   @override
   void initState() {
@@ -91,6 +113,9 @@ class _MainScreenState extends State<MainScreen> {
     _inspectorViewModel?.dispose();
     _inspectorViewModel = null;
     _inspectedTaskId = null;
+    if (_currentRailView == RailViewMode.analytics) {
+      _currentRailView = RailViewMode.downloads;
+    }
     setState(() {});
   }
 
@@ -126,6 +151,7 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = ColorTokens.of(context);
     final selectedTask = _downloadListViewModel.currentSelectedTask;
 
     return Shortcuts(
@@ -149,77 +175,105 @@ class _MainScreenState extends State<MainScreen> {
         child: Focus(
           autofocus: true,
           child: Scaffold(
+            backgroundColor: colors.canvasBackground,
             body: Stack(
               children: [
-                Column(
-                  children: [
-                    // Header Bar
-                    AppHeaderBar(
-                      onNewDownload: () => _openAddDownloadDialog(),
-                      onResumeSelected: () => _downloadListViewModel.togglePauseSelected(),
-                      onPauseSelected: () => _downloadListViewModel.togglePauseSelected(),
-                      onDeleteSelected: () => _downloadListViewModel.cancelSelected(),
-                      onSearchChanged: (q) => _downloadListViewModel.setSearchQuery(q),
-                      onOpenSettings: _openSettingsDialog,
-                      hasSelection: _downloadListViewModel.selectedTaskIds.isNotEmpty,
-                    ),
+                Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Row(
+                    children: [
+                      // Leftmost Activity Rail (Reference Images 1 & 4)
+                      ActivityRail(
+                        currentView: _currentRailView,
+                        onSelectView: (view) {
+                          if (view == RailViewMode.settings) {
+                            _openSettingsDialog();
+                          } else if (view == RailViewMode.analytics) {
+                            setState(() => _currentRailView = view);
+                            if (_inspectedTaskId == null && _downloadListViewModel.tasks.isNotEmpty) {
+                              _selectTaskForInspection(_downloadListViewModel.tasks.first.id);
+                            }
+                          } else {
+                            setState(() => _currentRailView = view);
+                          }
+                        },
+                        isDark: widget.themeMode != ThemeModeOption.cleanLight,
+                        onToggleTheme: widget.onToggleTheme,
+                      ),
+                      const SizedBox(width: 12),
 
-                    // Main Body: Sidebar + Table + Inspector Drawer
-                    Expanded(
-                      child: Row(
-                        children: [
-                          // Left Sidebar
-                          SidebarNavigation(
-                            selectedStatusFilter: _downloadListViewModel.selectedStatusFilter,
-                            selectedCategory: _downloadListViewModel.selectedCategory,
-                            onSelectStatus: (status) => _downloadListViewModel.setStatusFilter(status),
-                            onSelectCategory: (cat) => _downloadListViewModel.setSelectedCategory(cat),
-                          ),
+                      // Sidebar Navigation (Reference Images 1 & 2)
+                      SidebarNavigation(
+                        selectedStatusFilter: _downloadListViewModel.selectedStatusFilter,
+                        selectedCategory: _downloadListViewModel.selectedCategory,
+                        onSelectStatus: (status) => _downloadListViewModel.setStatusFilter(status),
+                        onSelectCategory: (cat) => _downloadListViewModel.setSelectedCategory(cat),
+                        countAll: _downloadListViewModel.countAll,
+                        countDownloading: _downloadListViewModel.countDownloading,
+                        countPaused: _downloadListViewModel.countPaused,
+                        countCompleted: _downloadListViewModel.countCompleted,
+                        categoryCountProvider: (cat) => _downloadListViewModel.countForCategory(cat),
+                      ),
+                      const SizedBox(width: 12),
 
-                          // Center & Right Pane
-                          Expanded(
-                            child: Column(
-                              children: [
-                                // Download Table
-                                Expanded(
-                                  child: DownloadListView(
-                                    viewModel: _downloadListViewModel,
-                                    onTaskSelected: (taskId) => _selectTaskForInspection(taskId),
-                                  ),
-                                ),
+                      // Main Content Area
+                      Expanded(
+                        child: Column(
+                          children: [
+                            // Top Header Island Bar
+                            AppHeaderBar(
+                              onNewDownload: () => _openAddDownloadDialog(),
+                              onResumeSelected: () => _downloadListViewModel.togglePauseSelected(),
+                              onPauseSelected: () => _downloadListViewModel.togglePauseSelected(),
+                              onDeleteSelected: () => _downloadListViewModel.cancelSelected(),
+                              onSearchChanged: (q) => _downloadListViewModel.setSearchQuery(q),
+                              onOpenSettings: _openSettingsDialog,
+                              hasSelection: _downloadListViewModel.selectedTaskIds.isNotEmpty,
+                              totalSpeedBps: _downloadListViewModel.totalSpeedBps,
+                            ),
+                            const SizedBox(height: 12),
 
-                                // Bottom Inspector Drawer (if selected)
-                                if (_inspectorViewModel != null && selectedTask != null)
-                                  ListenableBuilder(
-                                    listenable: _inspectorViewModel!,
-                                    builder: (context, _) {
-                                      return TaskInspectorView(
-                                        viewModel: _inspectorViewModel!,
-                                        task: selectedTask,
-                                        onRefreshUrl: () {
-                                          _downloadListViewModel.refreshDownloadAddress(
-                                            selectedTask.id,
-                                            selectedTask.url,
-                                          );
-                                        },
-                                        onClose: _closeInspector,
+                            // Download List Bento Island
+                            Expanded(
+                              child: DownloadListView(
+                                viewModel: _downloadListViewModel,
+                                onTaskSelected: (taskId) => _selectTaskForInspection(taskId),
+                              ),
+                            ),
+
+                            // Floating Inspector Dock (Image 3 & 4 style)
+                            if (_inspectorViewModel != null && selectedTask != null) ...[
+                              const SizedBox(height: 12),
+                              ListenableBuilder(
+                                listenable: _inspectorViewModel!,
+                                builder: (context, _) {
+                                  return TaskInspectorView(
+                                    viewModel: _inspectorViewModel!,
+                                    task: selectedTask,
+                                    onRefreshUrl: () {
+                                      _downloadListViewModel.refreshDownloadAddress(
+                                        selectedTask.id,
+                                        selectedTask.url,
                                       );
                                     },
-                                  ),
-                              ],
-                            ),
-                          ),
-                        ],
+                                    onClose: _closeInspector,
+                                  );
+                                },
+                              ),
+                            ],
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
 
-                // Floating Drop Target Basket (PRD 05 Section 6.4)
-                DropBasketTarget(
-                  onUrlDropped: (url) => _openAddDownloadDialog(url),
-                  onTap: () => _openAddDownloadDialog(),
-                ),
+                // Floating Drop Basket Target
+                if (widget.showDropBasket)
+                  DropBasketTarget(
+                    onUrlDropped: (url) => _openAddDownloadDialog(url),
+                    onTap: () => _openAddDownloadDialog(),
+                  ),
               ],
             ),
           ),

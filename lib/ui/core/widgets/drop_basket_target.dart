@@ -22,6 +22,8 @@ class _DropBasketTargetState extends State<DropBasketTarget> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = ColorTokens.of(context);
+
     return Positioned(
       right: _position.dx,
       bottom: _position.dy,
@@ -43,29 +45,29 @@ class _DropBasketTargetState extends State<DropBasketTarget> {
             borderRadius: BorderRadius.circular(32),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              width: 56,
-              height: 56,
+              width: 52,
+              height: 52,
               decoration: BoxDecoration(
-                color: ColorTokens.darkBgSurface.withValues(alpha: _isHovering ? 0.95 : 0.75),
+                color: colors.cardSurface.withValues(alpha: _isHovering ? 0.98 : 0.88),
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: _isHovering ? ColorTokens.statusActive : ColorTokens.darkBorderSubtle,
-                  width: _isHovering ? 2.5 : 1.5,
+                  color: _isHovering ? ColorTokens.accentPrimary : colors.borderSubtle,
+                  width: _isHovering ? 2.0 : 1.0,
                 ),
                 boxShadow: [
                   BoxShadow(
                     color: _isHovering
-                        ? ColorTokens.statusActive.withValues(alpha: 0.4)
-                        : Colors.black.withValues(alpha: 0.3),
-                    blurRadius: _isHovering ? 12 : 6,
-                    spreadRadius: _isHovering ? 2 : 0,
+                        ? ColorTokens.accentPrimary.withValues(alpha: 0.35)
+                        : (colors.isDark ? Colors.black.withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.08)),
+                    blurRadius: _isHovering ? 14 : 8,
+                    spreadRadius: _isHovering ? 1 : 0,
                   ),
                 ],
               ),
               child: Icon(
                 AdaptiveIcons.dropTarget,
-                color: ColorTokens.statusActive,
-                size: 26,
+                color: ColorTokens.accentPrimary,
+                size: 24,
               ),
             ),
           ),

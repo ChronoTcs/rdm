@@ -48,6 +48,15 @@ class DownloadListViewModel extends ChangeNotifier {
   Set<String> get selectedTaskIds => Set.unmodifiable(_selectedTaskIds);
   String? get selectedTaskId => _selectedTaskId;
 
+  int get countAll => _tasks.length;
+  int get countDownloading => _tasks.where((t) => t.status == TaskStatus.downloading).length;
+  int get countPaused => _tasks.where((t) => t.status == TaskStatus.paused).length;
+  int get countCompleted => _tasks.where((t) => t.status == TaskStatus.completed).length;
+  int countForCategory(TaskCategory cat) => _tasks.where((t) => t.category == cat).length;
+  int get totalSpeedBps => _tasks
+      .where((t) => t.status == TaskStatus.downloading)
+      .fold(0, (sum, t) => sum + t.speedBps);
+
   DownloadTask? get currentSelectedTask {
     if (_selectedTaskId == null) return null;
     return _tasks.where((t) => t.id == _selectedTaskId).firstOrNull;

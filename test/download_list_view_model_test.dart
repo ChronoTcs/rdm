@@ -96,4 +96,30 @@ void main() {
     final resumedTask = viewModel.allTasks.firstWhere((t) => t.id == taskId);
     expect(resumedTask.status, TaskStatus.downloading);
   });
+
+  test('DownloadListViewModel counts and aggregate speed calculations', () async {
+    expect(viewModel.countAll, 0);
+    expect(viewModel.countDownloading, 0);
+    expect(viewModel.countPaused, 0);
+    expect(viewModel.countCompleted, 0);
+    expect(viewModel.totalSpeedBps, 0);
+
+    await repository.startDownload(
+      url: 'https://example.com/archive.zip',
+      destinationPath: 'C:/Downloads',
+      filename: 'archive.zip',
+    );
+    await repository.startDownload(
+      url: 'https://example.com/song.mp3',
+      destinationPath: 'C:/Downloads',
+      filename: 'song.mp3',
+    );
+    await Future.delayed(const Duration(milliseconds: 50));
+
+    expect(viewModel.countAll, 2);
+    expect(viewModel.countDownloading, 2);
+    expect(viewModel.countForCategory(TaskCategory.compressed), 1);
+    expect(viewModel.countForCategory(TaskCategory.audio), 1);
+    expect(viewModel.countForCategory(TaskCategory.video), 0);
+  });
 }
